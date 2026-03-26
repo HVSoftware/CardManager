@@ -4,39 +4,62 @@
 
 {% block body %}
 <div class="container mt-5">
-    <h1 class="mb-4">Card Game</h1>
-    
-    {% if not app.session.get('game_started') %}
-    <form method="post" action="{{ path('app_game_start') }}">
-        <div class="mb-3">
-            <label for="numPlayers" class="form-label">Number of players (1-4)</label>
-            <input type="number" class="form-control" id="numPlayers" name="numPlayers" min="1" max="4" value="2" required>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Card Game</h4>
+                </div>
+                <div class="card-body">
+                    {% for message in app.flashes('success') %}
+                        <div class="alert alert-success">{{ message }}</div>
+                    {% endfor %}
+                    {% for message in app.flashes('warning') %}
+                        <div class="alert alert-warning">{{ message }}</div>
+                    {% endfor %}
+                    
+                    {% if not app.session.get('game_started') %}
+                    <form method="post" action="{{ path('app_game_start') }}">
+                        <div class="mb-3">
+                            <label for="numPlayers" class="form-label">Number of players (1-4)</label>
+                            <input type="number" class="form-control" id="numPlayers" name="numPlayers" min="1" max="4" value="2" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="numRounds" class="form-label">Number of rounds</label>
+                            <input type="number" class="form-control" id="numRounds" name="numRounds" min="1" value="3" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">Start Game</button>
+                    </form>
+                    {% else %}
+                    <div class="text-center mb-4">
+                        <p class="mb-1"><strong>Players:</strong> {{ app.session.get('num_players') }}</p>
+                        <p class="mb-1"><strong>Rounds:</strong> {{ app.session.get('num_rounds') }}</p>
+                        <p class="mb-0"><strong>Current round:</strong> {{ app.session.get('current_round', 1) }}</p>
+                    </div>
+                    
+                    {% if app.session.get('last_drawn_card') %}
+                    <div class="alert alert-info text-center">
+                        <strong>Last drawn card:</strong><br>
+                        <span class="fs-5">{{ app.session.get('last_drawn_card') }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" action="{{ path('app_game_draw') }}">
+                        <button type="submit" class="btn btn-success w-100 mb-2">Draw Card</button>
+                    </form>
+                    
+                    <form method="post" action="{{ path('app_game_reset') }}">
+                        <button type="submit" class="btn btn-outline-secondary w-100">Reset Game</button>
+                    </form>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ path('app_home') }}" class="text-decoration-none">← Back to Home</a>
+                </div>
+            </div>
         </div>
-        
-        <div class="mb-3">
-            <label for="numRounds" class="form-label">Number of rounds</label>
-            <input type="number" class="form-control" id="numRounds" name="numRounds" min="1" value="3" required>
-        </div>
-        
-        <button type="submit" class="btn btn-primary">Start Game</button>
-    </form>
-    {% else %}
-    <div class="alert alert-info">
-        <strong>Game in progress!</strong><br>
-        Players: {{ app.session.get('num_players') }}<br>
-        Rounds: {{ app.session.get('num_rounds') }}
     </div>
-    
-    <form method="post" action="{{ path('app_game_draw') }}">
-        <button type="submit" class="btn btn-success">Draw Card</button>
-    </form>
-    
-    <form method="post" action="{{ path('app_game_reset') }}" class="mt-3">
-        <button type="submit" class="btn btn-secondary">Reset Game</button>
-    </form>
-    {% endif %}
-    
-    <hr>
-    <a href="{{ path('app_home') }}" class="btn btn-outline-secondary">Back to Home</a>
 </div>
 {% endblock %}

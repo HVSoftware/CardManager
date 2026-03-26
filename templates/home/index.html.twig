@@ -4,25 +4,31 @@
 
 {% block body %}
 <div class="container mt-5">
-    <h1 class="mb-4">CardManager</h1>
-    <p class="lead">A simple card game application.</p>
-    
-    <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Play the Game</h5>
-                    <p class="card-text">Start a new card game with friends.</p>
-                    <a href="{{ path('app_game') }}" class="btn btn-primary">Start Game</a>
-                </div>
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="text-center mb-5">
+                <h1 class="display-4">CardManager</h1>
+                <p class="lead text-muted">A simple card game application</p>
             </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Command Line</h5>
-                    <p class="card-text">Play from the terminal.</p>
-                    <code>php bin/console card:play</code>
+            
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">🎴 Play the Game</h5>
+                            <p class="card-text">Start a new card game with friends directly in your browser.</p>
+                            <a href="{{ path('app_game') }}" class="btn btn-primary">Start Game</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">💻 Command Line</h5>
+                            <p class="card-text">Play from the terminal using Symfony console.</p>
+                            <code class="d-block p-2 bg-light rounded">php bin/console card:play</code>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
