@@ -1,20 +1,42 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello GameController!{% endblock %}
+{% block title %}Play Game - CardManager{% endblock %}
 
 {% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
-
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
-
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code>/home/harryvandervalk/PhpstormProjects/CardManager/src/Controller/GameController.php</code></li>
-        <li>Your template at <code>/home/harryvandervalk/PhpstormProjects/CardManager/templates/game/index.html.twig</code></li>
-    </ul>
+<div class="container mt-5">
+    <h1 class="mb-4">Card Game</h1>
+    
+    {% if not app.session.get('game_started') %}
+    <form method="post" action="{{ path('app_game_start') }}">
+        <div class="mb-3">
+            <label for="numPlayers" class="form-label">Number of players (1-4)</label>
+            <input type="number" class="form-control" id="numPlayers" name="numPlayers" min="1" max="4" value="2" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="numRounds" class="form-label">Number of rounds</label>
+            <input type="number" class="form-control" id="numRounds" name="numRounds" min="1" value="3" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Start Game</button>
+    </form>
+    {% else %}
+    <div class="alert alert-info">
+        <strong>Game in progress!</strong><br>
+        Players: {{ app.session.get('num_players') }}<br>
+        Rounds: {{ app.session.get('num_rounds') }}
+    </div>
+    
+    <form method="post" action="{{ path('app_game_draw') }}">
+        <button type="submit" class="btn btn-success">Draw Card</button>
+    </form>
+    
+    <form method="post" action="{{ path('app_game_reset') }}" class="mt-3">
+        <button type="submit" class="btn btn-secondary">Reset Game</button>
+    </form>
+    {% endif %}
+    
+    <hr>
+    <a href="{{ path('app_home') }}" class="btn btn-outline-secondary">Back to Home</a>
 </div>
 {% endblock %}
