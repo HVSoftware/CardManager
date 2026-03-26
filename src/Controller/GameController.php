@@ -11,7 +11,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class GameController extends AbstractController
 {
-    private const CARDS_FILE = 'cards.txt';
+    private const CARDS_DIR = 'cards';
+    private const DEFAULT_CARDS_FILE = 'cards.txt';
 
     public function __construct(
         private readonly RequestStack $requestStack
@@ -23,9 +24,13 @@ final class GameController extends AbstractController
     {
         $session = $this->requestStack->getSession();
         $gameStarted = $session->get('game_started', false);
+        $cardFiles = $this->getAvailableCardFiles();
+        $selectedFile = $session->get('card_file', self::DEFAULT_CARDS_FILE);
 
         return $this->render('game/index.html.twig', [
             'game_started' => $gameStarted,
+            'card_files' => $cardFiles,
+            'selected_file' => $selectedFile,
         ]);
     }
 
@@ -36,14 +41,16 @@ final class GameController extends AbstractController
         
         $numPlayers = (int) $request->request->get('numPlayers', 2);
         $numRounds = (int) $request->request->get('numRounds', 3);
+        $cardFile = $request->request->get('cardFile', self::DEFAULT_CARDS_FILE);
 
         $session->set('num_players', min(max($numPlayers, 1), 4));
         $session->set('num_rounds', max($numRounds, 1));
+        $session->set('card_file', $cardFile);
         $session->set('game_started', true);
         $session->set('current_round', 1);
         $session->set('current_player', 0);
 
-        $cards = $this->loadCards();
+        $cards = $this->loadCards($cardFile);
         $session->set('cards', $cards);
 
         return $this->redirectToRoute('app_game');
@@ -62,7 +69,7 @@ final class GameController extends AbstractController
         
         if (empty($cards)) {
             $session->set('game_started', false);
-            $session->getFlashBag()->add('warning', 'No cards left!');
+            $this->addFlash('warning', 'No cards left!');
             return $this->redirectToRoute('app_game');
         }
 
@@ -88,7 +95,7 @@ final class GameController extends AbstractController
             
             if ($currentRound > $numRounds) {
                 $session->set('game_started', false);
-                $session->getFlashBag()->add('success', 'Game over!');
+                $this->addFlash('success', 'Game over!');
             }
         }
 
@@ -110,10 +117,42 @@ final class GameController extends AbstractController
         return $this->redirectToRoute('app_game');
     }
 
-    private function loadCards(): array
+    private function getAvailableCardFiles(): array
+    {
+        $files = [];
+        $dir = self::CARDS_DIR;
+
+        if (!is_dir($dir)) {
+            return [self::DEFAULT_CARDS_FILE];
+        }
+
+        $handle = opendir($dir);
+        if ($handle === false) {
+            return [self::DEFAULT_CARDS_FILE];
+        }
+
+        while (($file = readdir($handle)) !== false) {
+            if ($file !== '.' && $file !== '..' && pathinfo($file, PATHINFO_EXTENSION) === 'txt') {
+                $files[] = $file;
+            }
+        }
+        closedir($handle);
+
+        sort($files);
+
+        return empty($files) ? [self::DEFAULT_CARDS_FILE] : $files;
+    }
+
+    private function loadCards(string $filename): array
     {
         $cards = [];
-        $file = fopen(self::CARDS_FILE, 'r');
+        $filePath = self::CARDS_DIR . '/' . $filename;
+
+        if (!file_exists($filePath)) {
+            return $cards;
+        }
+
+        $file = fopen($filePath, 'r');
 
         if ($file === false) {
             return $cards;

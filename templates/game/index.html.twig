@@ -21,6 +21,15 @@
                     {% if not app.session.get('game_started') %}
                     <form method="post" action="{{ path('app_game_start') }}">
                         <div class="mb-3">
+                            <label for="cardFile" class="form-label">Card deck</label>
+                            <select class="form-select" id="cardFile" name="cardFile">
+                                {% for file in card_files %}
+                                    <option value="{{ file }}" {{ file == selected_file ? 'selected' : '' }}>{{ file }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
                             <label for="numPlayers" class="form-label">Number of players (1-4)</label>
                             <input type="number" class="form-control" id="numPlayers" name="numPlayers" min="1" max="4" value="2" required>
                         </div>
@@ -34,6 +43,7 @@
                     </form>
                     {% else %}
                     <div class="text-center mb-4">
+                        <p class="mb-1"><strong>Deck:</strong> {{ app.session.get('card_file') }}</p>
                         <p class="mb-1"><strong>Players:</strong> {{ app.session.get('num_players') }}</p>
                         <p class="mb-1"><strong>Rounds:</strong> {{ app.session.get('num_rounds') }}</p>
                         <p class="mb-0"><strong>Current round:</strong> {{ app.session.get('current_round', 1) }}</p>
