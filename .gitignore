@@ -19,5 +19,4 @@
 /assets/vendor/
 ###< symfony/asset-mapper ###
 
-*.txt
 /.idea
