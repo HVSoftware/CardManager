@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -21,6 +22,26 @@ class CardPlayCommand extends Command
         parent::__construct();
     }
 
+    /**
+     * @param mixed $kaartFile
+     * @return array
+     */
+    public function getCards(string $cardFile): array
+    {
+        $cards = [];
+        $file = fopen($cardFile, "r");
+
+        while (($line = fgets($file)) !== false) {
+            $cards[] = ["action" => trim($line)];
+        }
+
+        fclose($file);
+
+        shuffle($cards);
+
+        return $cards;
+    }
+
     protected function configure(): void
     {
         $this
@@ -32,61 +53,86 @@ class CardPlayCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $kaartFile = $input->getArgument('arg1') ?? 'kaarten.txt';
+        $cardFile = $input->getArgument('arg1') ?? 'cards.txt';
 
-        if ($kaartFile) {
-            $io->note(sprintf('You passed an argument: %s', $kaartFile));
+        if ($cardFile) {
+            $io->note(sprintf('You passed an argument: %s', $cardFile));
         }
 
-        $spelers = [];
-        $aantalSpelers = $io->ask('Met hoeveel spelers wil je spelen (1-4)', 2);
+        $players = [];
+        $numPlayers = $io->ask('How many players (1-4)?', 2, function ($answer) {
+            if (!is_numeric($answer) || $answer < 1 || $answer > 4) {
+                throw new RuntimeException('Enter a number between 1 and 4.');
+            }
+            return (int) $answer;
+        });
 
-        for ($i = 1; $i <= $aantalSpelers; $i++) {
-            $spelers[] = $io->ask(sprintf('Hallo speler %d, wat is je naam?', $i), sprintf('Speler %d', $i));
+        $rounds = $io->ask('How many rounds?', 3, function ($answer) {
+            if (!is_numeric($answer) || $answer < 1) {
+                throw new RuntimeException('Enter a positive number.');
+            }
+            return (int) $answer;
+        });
+
+
+        for ($i = 1; $i <= $numPlayers; $i++) {
+            $players[] = $io->ask(sprintf('Hello player %d, what is your name?', $i), sprintf('Player %d', $i));
         }
 
         if ($input->getOption('option1')) {
             // ...
         }
 
-        $io->note(sprintf('Je speelt met het volgend aantal spelers: %s', $aantalSpelers));
+        $io->note(sprintf('You are playing with %d players.', $numPlayers));
 
-        $io->note('De volgende spelers doen mee:');
-        foreach ($spelers as $speler) {
-            $io->note($speler);
+        $io->note('The following players are participating:');
+        foreach ($players as $player) {
+            $io->note($player);
         }
 
-        $huidigeSpeler = 0;
-        $io->note(sprintf('De volgende spelers mag beginnen: %s',  $spelers[$huidigeSpeler]));
+        $currentPlayer = 0;
+//        $currentPlayer = array_rand($players);
+        $io->note(sprintf('The first player to start is: %s', $players[$currentPlayer]));
 
-        $kaarten = [];
-        $bestand = fopen($kaartFile, "r");
-
-        while (($lijn = fgets($bestand)) !== false) {
-            $kaarten[] = ["actie" => trim($lijn)];
+        if (!file_exists($cardFile)) {
+            $io->error('The card file does not exist.');
+            return Command::FAILURE;
         }
 
-        fclose($bestand);
+        $cards = $this->getCards($cardFile);
 
-        $io->note(sprintf('We beginnen met %d kaarten.', count($kaarten)));
+        if (empty($cards)) {
+            $io->error('There are no cards in the file. Add cards and try again.');
+            return Command::FAILURE;
+        }
+
+        $io->note(sprintf('We start with %d cards.', count($cards)));
+        $io->note(sprintf('There are a total of %d rounds.', $rounds));
 
         do {
-            $io->note(sprintf('Er zijn nog %d kaarten over.', count($kaarten)));
+            $io->note(sprintf('There are %d cards left.', count($cards)));
 
-            $pickKaart = random_int(0, count($kaarten) - 1);
-            $io->ask(sprintf('%s, trek een kaart', $spelers[$huidigeSpeler]));
+            $pickCard = random_int(0, count($cards) - 1);
+            $io->ask(sprintf('%s, draw a card', $players[$currentPlayer]));
 
-            $io->note($kaarten[$pickKaart]);
-            unset($kaarten[$pickKaart]);
-            $kaarten = array_values($kaarten);
+            $io->note($cards[$pickCard]);
+            unset($cards[$pickCard]);
+            $cards = array_values($cards);
 
-            $huidigeSpeler++;
-            if ($huidigeSpeler === count($spelers)) {
-                $huidigeSpeler = 0;
+//            $cards = array_splice($cards, $pickCard, 1)[0];
+
+            $currentPlayer++;
+            if ($currentPlayer === count($players)) {
+                $currentPlayer = 0;
+                $rounds--;
+
+                if ($rounds > 0) {
+                    $io->note(sprintf('There are %d rounds left.', $rounds));
+                }
             }
-        } while (count($kaarten) > 0);
+        } while ($rounds > 0);
 
-        $io->note('Er zijn geen kaarten meer over.');
+        $io->note('Done. All rounds have been played.');
 
         $io->success('You have a new command! Now make it your own! Pass --help to see your options.');
 

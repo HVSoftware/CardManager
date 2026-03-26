@@ -42,16 +42,16 @@ class CardDrawCommand extends Command
             // ...
         }
 
-        $kaarten = [];
-        $bestand = fopen("kaarten.txt", "r");
+        $cards = [];
+        $file = fopen("cards.txt", "r");
 
-        while (($lijn = fgets($bestand)) !== false) {
-            $kaarten[] = ["actie" => trim($lijn)];
+        while (($line = fgets($file)) !== false) {
+            $cards[] = ["action" => trim($line)];
         }
 
-        fclose($bestand);
+        fclose($file);
 
-        $io->note($kaarten[random_int(0, count($kaarten) - 1)]);
+        $io->note($cards[random_int(0, count($cards) - 1)]);
 
         $io->success('You have a new command! Now make it your own! Pass --help to see your options.');
 
